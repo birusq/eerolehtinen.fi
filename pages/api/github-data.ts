@@ -1,11 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-interface RepositoryData {
+type RepositoryData = {
 	name: string
 }
 
-const getRepositoryNames = () =>
-	new Promise<string[]>((resolve, reject) => {
+const getRepositoryNames = () => {
+	if (!process.env.GITHUB_TOKEN) {
+		throw new Error("GITHUB_TOKEN env variable not set")
+	}
+	return new Promise<string[]>((resolve, reject) => {
 		fetch("https://api.github.com/graphql", {
 			method: "POST",
 			headers: [
@@ -39,8 +42,9 @@ const getRepositoryNames = () =>
 			reject(err)
 		})
 	})
+}
 
-interface ReleaseData {
+type RepoRelease = {
 	name: string,
 	descriptionHTML: string,
 	tagName: string,
@@ -48,7 +52,11 @@ interface ReleaseData {
 	url: string
 }
 
-const toReleaseData = (node: any): ReleaseData => {
+type Repository = {
+	releases: RepoRelease[]
+}
+
+const toRepoRelease = (node: any): RepoRelease => {
 	return {
 		...node,
 		publishedAt: Date.parse(node.publishedAt)
@@ -56,8 +64,11 @@ const toReleaseData = (node: any): ReleaseData => {
 }
 
 
-const getReleases = (repoName: string) =>
-	new Promise<ReleaseData[]>((resolve, reject) => {
+const getRepository = (repoName: string) => {
+	if (!process.env.GITHUB_TOKEN) {
+		throw new Error("GITHUB_TOKEN env variable not set")
+	}
+	return new Promise<Repository>((resolve, reject) => {
 		fetch("https://api.github.com/graphql", {
 			method: "POST",
 			headers: [
@@ -89,30 +100,35 @@ const getReleases = (repoName: string) =>
 				reject("Invalid repository request")
 			}
 			else {
-				resolve(json.data.repository.releases.nodes.map((node: any) => toReleaseData(node)))
+				const releases = json.data.repository.releases.nodes.map((node: any) => toRepoRelease(node))
+				const repository = { releases } as Repository
+				resolve(repository)
 			}
 		}).catch(err => {
 			reject(err)
 		})
 	})
+}
+
+const getRepositoryMap = async () => {
+	const repoNames = await getRepositoryNames()
+
+	const repoDatas = await Promise.all(repoNames.map(r => getRepository(r)))
+
+	let repoMap: Record<string, Repository> = {}
+
+	repoNames.forEach((name, i) => {
+		repoMap = { ...repoMap, [name]: repoDatas[i] }
+	})
+
+	return repoMap
+}
 
 
 export default async (_req: NextApiRequest, res: NextApiResponse) => {
 	try {
-		if (!process.env.GITHUB_TOKEN) {
-			throw new Error("GITHUB_TOKEN env variable not set")
-		}
-
-		const repositories = await getRepositoryNames()
-
-		const releases = await Promise.all(repositories.map(r => getReleases(r)))
-
-		let releasesMap: Record<string, ReleaseData[]> = {}
-		for (let i = 0; i < releases.length; i++) {
-			releasesMap = { ...releasesMap, [repositories[i]]: releases[i] }
-		}
-
-		res.status(200).json(releasesMap)
+		const data = getRepositoryMap()
+		res.status(200).json(data)
 	}
 	catch (err) {
 		console.error(err)
