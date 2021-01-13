@@ -4,4 +4,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 })
 const withPreact = require('next-plugin-preact');
 
-module.exports = withBundleAnalyzer(withPreact({}))
+module.exports = withBundleAnalyzer(withPreact({
+  target: "serverless"
+}))
