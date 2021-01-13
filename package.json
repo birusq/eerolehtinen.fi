@@ -17,8 +17,7 @@
     "preact-render-to-string": "^5.1.12",
     "react": "npm:@preact/compat",
     "react-dom": "npm:@preact/compat",
-    "react-ssr-prepass": "npm:preact-ssr-prepass",
-    "shards-react": "^1.0.3"
+    "react-ssr-prepass": "npm:preact-ssr-prepass"
   },
   "devDependencies": {
     "@types/react": "^17.0.0",
