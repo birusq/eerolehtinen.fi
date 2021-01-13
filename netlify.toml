@@ -1,5 +1,5 @@
 [build]
-command = "npm run build"
+command = "npm i --save react@npm:@preact/compat react-dom@npm:@preact/compat ; npm run build"
 
 [[plugins]]
 package = "@netlify/plugin-nextjs"
