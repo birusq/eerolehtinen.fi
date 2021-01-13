@@ -2,6 +2,9 @@
 command = "npm i --save react@npm:@preact/compat react-dom@npm:@preact/compat ; npm run build"
 
 [[plugins]]
+package = "./plugin-prebuild-commands"
+
+[[plugins]]
 package = "@netlify/plugin-nextjs"
 
 [[plugins]]
