@@ -2,9 +2,6 @@
 command = "yarn run build"
 
 [[plugins]]
-package = "./plugin-prebuild-commands"
-
-[[plugins]]
 package = "@netlify/plugin-nextjs"
 
 [[plugins]]
