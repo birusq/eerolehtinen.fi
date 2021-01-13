@@ -1,24 +1,23 @@
-import getRandNum from '../utils/rand-num-api'
+//import getRandNum from '../utils/rand-num-api'
 
-const Test = ({ num }: { num: number }) => {
+const Test = (/*{ num }: { num: number }*/) => {
 	return (
 		<p>
-			{num}
 		</p>
 	)
 }
 
-export async function getStaticProps() {
-	const num = await getRandNum()
+// export const getStaticProps = () => {
+// 	const num = 42//await getRandNum()
 
-	console.log(num)
+// 	console.log(num)
 
-	return {
-		props: {
-			num,
-		},
-		revalidate: 1,
-	}
-}
+// 	return {
+// 		props: {
+// 			num,
+// 		},
+// 		revalidate: 1,
+// 	}
+// }
 
 export default Test
