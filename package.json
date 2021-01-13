@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@next/bundle-analyzer": "^10.0.5",
+    "critters": "^0.0.6",
     "netlify-plugin-cache-nextjs": "^1.5.2",
     "next": "^10.0.5",
     "next-plugin-preact": "^3.0.3",
