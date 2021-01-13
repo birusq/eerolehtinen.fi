@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-//import getRepositoryMap from '../../utils/github-api'
+import getRepositoryMap from '../../utils/github-api'
 
 export default async (_req: NextApiRequest, res: NextApiResponse) => {
 	try {
