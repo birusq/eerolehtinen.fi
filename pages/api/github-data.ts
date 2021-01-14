@@ -1,9 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import getRepositoryMap from '../../utils/github-api'
+import getRepositories from '../../utils/github-api'
 
 export default async (_req: NextApiRequest, res: NextApiResponse) => {
 	try {
-		const data = 42//getRepositoryMap()
+		const data = await getRepositories()
+
+		console.log(data)
+
 		res.status(200).json(data)
 	}
 	catch (err) {

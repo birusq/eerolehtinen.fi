@@ -1,7 +1,3 @@
-type RepositoryData = {
-	name: string
-}
-
 type RepoRelease = {
 	name: string,
 	descriptionHTML: string,
@@ -10,8 +6,29 @@ type RepoRelease = {
 	url: string
 }
 
+type RepoCommit = {
+	commitUrl: string,
+	committedDate: Date,
+	messageHeadLine: string,
+	messageBody: string
+}
+
 type Repository = {
+	name: string,
+	url: string
+	createdAt: Date,
+	updatedAt: Date,
 	releases: RepoRelease[]
+}
+
+const toRepository = (node: any): Repository => {
+	return {
+		...node,
+		createdAt: new Date(node.createdAt),
+		updatedAt: new Date(node.updatedAt),
+		releases: node.releases.nodes.map((relNode: any) => toRepoRelease(relNode)),
+		commits: node.defaultBranchRef.target.history.nodes.map((relNode: any) => toRepoCommit(relNode))
+	}
 }
 
 const toRepoRelease = (node: any): RepoRelease => {
@@ -21,104 +38,120 @@ const toRepoRelease = (node: any): RepoRelease => {
 	}
 }
 
-const getRepositoryNames = () => {
-	if (!process.env.GITHUB_TOKEN) {
-		throw new Error("GITHUB_TOKEN env variable not set")
+const toRepoCommit = (node: any): RepoCommit => {
+	return {
+		...node,
+		committedDate: Date.parse(node.committedDate)
 	}
-	return new Promise<string[]>((resolve, reject) => {
-		fetch("https://api.github.com/graphql", {
-			method: "POST",
-			headers: [
-				["Authorization", "bearer " + process.env.GITHUB_TOKEN]
-			],
-			body: JSON.stringify({
-				query: `
-				query GetRepos {
-					user(login: "birusq") {
-						repositories(privacy: PUBLIC, last: 100) {
-							nodes {
-								name
-							}
-						}
-					}
-				}`
-			})
-		}).then(res => {
-			return res.json()
-		}).then(json => {
-			if (!json.data) {
-				reject("Invalid repository request")
-			}
-			else {
-				const repositories: string[] = json.data.user.repositories.nodes
-					.map((node: RepositoryData) => node.name)
-
-				resolve(repositories)
-			}
-		}).catch(err => {
-			reject(err)
-		})
-	})
 }
 
-const getRepository = (repoName: string) => {
-	if (!process.env.GITHUB_TOKEN) {
-		throw new Error("GITHUB_TOKEN env variable not set")
-	}
-	return new Promise<Repository>((resolve, reject) => {
-		fetch("https://api.github.com/graphql", {
-			method: "POST",
-			headers: [
-				["Authorization", "bearer " + process.env.GITHUB_TOKEN]
-			],
-			body: JSON.stringify({
-				query: `
-				query GetReleases($name: String!) {
-					repository(owner: "birusq", name: $name) {
-						releases(last: 100) {
-							nodes {
-								name
-								descriptionHTML
-								tagName
-								publishedAt
-								url
-							}
-						}
+const QUERY_COMMITS_FRAGMENT = `
+	defaultBranchRef {
+		name
+		target {
+			... on Commit {
+				history(first: 100, after: $after) {
+					nodes {
+						commitUrl
+						committedDate
+						messageHeadline
+						messageBody
 					}
-				}`,
-				variables: {
-					name: repoName
+					pageInfo {
+						hasNextPage
+						endCursor
+					}
 				}
-			})
-		}).then(res => {
-			return res.json()
-		}).then(json => {
-			if (!json.data) {
-				reject("Invalid repository request")
 			}
-			else {
-				const releases = json.data.repository.releases.nodes.map((node: any) => toRepoRelease(node))
-				const repository = { releases } as Repository
-				resolve(repository)
+		}
+	}`
+
+const QUERY_REPOSITORIES = `
+	query GetRepositories($after: String) {
+		user(login: "birusq") {
+			repositories(privacy: PUBLIC, first: 100) {
+				nodes {
+					name
+					url
+					updatedAt
+					createdAt
+					releases(first: 100) {
+						nodes {
+							name
+							descriptionHTML
+							tagName
+							publishedAt
+							url
+						}
+					}
+					${QUERY_COMMITS_FRAGMENT}
+				}
 			}
-		}).catch(err => {
-			reject(err)
-		})
+		}
+	}`
+
+const QUERY_MORE_COMMITS = `
+	query GetCommits($repoName: String!, $after: String!) {
+		repository(owner: "birusq", name: $repoName) {
+			${QUERY_COMMITS_FRAGMENT}
+		}
+	}`
+
+const fetchGithubJson = async (query: string) => {
+	if (!process.env.GITHUB_TOKEN) {
+		throw new Error("GITHUB_TOKEN env variable not set")
+	}
+
+	const res = await fetch("https://api.github.com/graphql", {
+		method: "POST",
+		headers: [["Authorization", "bearer " + process.env.GITHUB_TOKEN]],
+		body: query
 	})
+
+	const json = await res.json()
+	if (!json.data) {
+		console.error(json)
+		throw new Error("Invalid repository request")
+	}
+	return json
 }
 
-const getRepositoryMap = async () => {
-	const repoNames = await getRepositoryNames()
-
-	const repoDatas = await Promise.all(repoNames.map(r => getRepository(r)))
-
-	let repoMap: Record<string, Repository> = {}
-
-	repoNames.forEach((name, i) => {
-		repoMap = { ...repoMap, [name]: repoDatas[i] }
+const createQueryMoreCommits = (repoName: string, after: string) =>
+	JSON.stringify({
+		query: QUERY_MORE_COMMITS,
+		variables: { repoName, after }
 	})
 
-	return repoMap
+const createQueryRepositories = () => JSON.stringify({ query: QUERY_REPOSITORIES })
+
+const getFullCommitHistory = async (repoNode: any) => {
+	let commitHistory = repoNode.defaultBranchRef.target.history
+	while (commitHistory.pageInfo.hasNextPage) {
+		const json = await fetchGithubJson(createQueryMoreCommits(repoNode.name, commitHistory.pageInfo.endCursor))
+
+		const newCommitHistory = json.data.repository.defaultBranchRef.target.history
+		commitHistory = {
+			nodes: [...commitHistory.nodes, ...newCommitHistory.nodes],
+			pageInfo: newCommitHistory.pageInfo
+		}
+	}
+	return commitHistory
 }
 
-export default getRepositoryMap
+const getRepositoriesInfo = async () => {
+
+	const json = await fetchGithubJson(createQueryRepositories())
+	const histories = await Promise.all(json.data.user.repositories.nodes.map((repoNode: any) => getFullCommitHistory(repoNode)))
+	histories.forEach((history, i) => {
+		json.data.user.repositories.nodes[i].defaultBranchRef.target.history = history
+	})
+
+	return json.data.user.repositories.nodes.map((repoNode: any) => toRepository(repoNode))
+}
+
+const getRepositories = async () => {
+	const repos = await getRepositoriesInfo()
+	return repos
+}
+
+export default getRepositories
