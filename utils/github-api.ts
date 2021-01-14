@@ -19,11 +19,13 @@ type Repository = {
 	createdAt: Date,
 	updatedAt: Date,
 	releases: RepoRelease[]
+	commits: RepoCommit[]
 }
 
 const toRepository = (node: any): Repository => {
 	return {
-		...node,
+		name: node.name,
+		url: node.url,
 		createdAt: new Date(node.createdAt),
 		updatedAt: new Date(node.updatedAt),
 		releases: node.releases.nodes.map((relNode: any) => toRepoRelease(relNode)),
@@ -33,15 +35,20 @@ const toRepository = (node: any): Repository => {
 
 const toRepoRelease = (node: any): RepoRelease => {
 	return {
-		...node,
-		publishedAt: Date.parse(node.publishedAt)
+		name: node.name,
+		descriptionHTML: node.descriptionHTML,
+		tagName: node.tagName,
+		url: node.url,
+		publishedAt: new Date(node.publishedAt)
 	}
 }
 
 const toRepoCommit = (node: any): RepoCommit => {
 	return {
-		...node,
-		committedDate: Date.parse(node.committedDate)
+		commitUrl: node.commitUrl,
+		messageHeadLine: node.messageHeadLine,
+		messageBody: node.messageBody,
+		committedDate: new Date(node.committedDate)
 	}
 }
 
