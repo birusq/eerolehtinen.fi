@@ -68,12 +68,20 @@
         "space-before-blocks": "error",
         "space-before-function-paren": [
             "error",
-            "never"
+            {
+                "anonymous": "always",
+                "named": "never",
+                "asyncArrow": "always"
+            }
         ],
         "space-in-parens": [
             "error",
             "never"
         ],
-        "arrow-spacing": "error"
+        "arrow-spacing": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "react/react-in-jsx-scope": "off",
+        "react/prop-types": "off",
+        "@typescript-eslint/no-explicit-any": "off"
     }
 }

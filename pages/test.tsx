@@ -1,5 +1,5 @@
-import getRandNum from '../utils/rand-num-api'
-import { InferGetStaticPropsType } from 'next'
+import getRandNum from "../utils/rand-num-api"
+import { GetStaticProps, InferGetStaticPropsType } from "next"
 
 const Test = ({ num }: InferGetStaticPropsType<typeof getStaticProps>) => {
 	return (
@@ -9,7 +9,7 @@ const Test = ({ num }: InferGetStaticPropsType<typeof getStaticProps>) => {
 	)
 }
 
-export const getStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
 	const num = await getRandNum()
 
 	console.log(num)

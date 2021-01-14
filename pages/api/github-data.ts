@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import getRepositories from '../../utils/github-api'
+import type { NextApiRequest, NextApiResponse } from "next"
+import getRepositories from "../../utils/github-api"
 
 export default async (_req: NextApiRequest, res: NextApiResponse) => {
 	try {
@@ -11,6 +11,6 @@ export default async (_req: NextApiRequest, res: NextApiResponse) => {
 	}
 	catch (err) {
 		console.error(err)
-		res.status(500).send("Internal error");
+		res.status(500).send("Internal error")
 	}
 }
