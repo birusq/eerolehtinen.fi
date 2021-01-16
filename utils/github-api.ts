@@ -145,7 +145,7 @@ const getFullCommitHistory = async (repoNode: any) => {
 	return commitHistory
 }
 
-const getRepositoriesInfo = async (): Promise<Repository[]> => {
+const getRepositories = async (): Promise<Repository[]> => {
 	const json = await fetchGithubJson(createQueryRepositories())
 	const histories = await Promise.all(json.data.user.repositories.nodes.map(
 		(repoNode: any) => getFullCommitHistory(repoNode)))
@@ -154,11 +154,6 @@ const getRepositoriesInfo = async (): Promise<Repository[]> => {
 	})
 
 	return json.data.user.repositories.nodes.map((repoNode: any) => toRepository(repoNode))
-}
-
-const getRepositories = async () => {
-	const repos = await getRepositoriesInfo()
-	return repos
 }
 
 export default getRepositories
