@@ -14,7 +14,7 @@
     "netlify-plugin-cache-nextjs": "^1.5.2",
     "next": "^10.0.5",
     "next-plugin-preact": "^3.0.3",
-    "preact": "^10.5.9",
+    "preact": "^10.5.10",
     "preact-render-to-string": "^5.1.12",
     "react": "npm:@preact/compat",
     "react-dom": "npm:@preact/compat",
