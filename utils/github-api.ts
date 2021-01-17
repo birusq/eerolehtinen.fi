@@ -104,7 +104,19 @@ const QUERY_MORE_COMMITS = `
 		}
 	}`
 
-const fetchGithubJson = async (query: string) => {
+const createQueryMoreCommits = (repoName: string, after: string) =>
+	JSON.stringify({
+		query: QUERY_MORE_COMMITS,
+		variables: { repoName, after }
+	})
+
+const createQueryRepositories = () => JSON.stringify({ query: QUERY_REPOSITORIES })
+
+/**
+ * Helper function to fetch data from GitHub GraphQL API
+ * @param query stringified GraphQL query
+ */
+const fetchGithubJson = async (query: string): Promise<any> => {
 	if (!process.env.GITHUB_TOKEN) {
 		throw new Error("GITHUB_TOKEN env variable not set")
 	}
@@ -123,15 +135,12 @@ const fetchGithubJson = async (query: string) => {
 	return json
 }
 
-const createQueryMoreCommits = (repoName: string, after: string) =>
-	JSON.stringify({
-		query: QUERY_MORE_COMMITS,
-		variables: { repoName, after }
-	})
-
-const createQueryRepositories = () => JSON.stringify({ query: QUERY_REPOSITORIES })
-
-const getFullCommitHistory = async (repoNode: any) => {
+/**
+ * GitHub GraphQL API can return at most 100 commits per request,
+ * this gets them all with repeated requests
+ * @param repoNode Node of GitHub repository from GitHub GraphQL API
+ */
+const getFullCommitHistory = async (repoNode: any): Promise<any> => {
 	let commitHistory = repoNode.defaultBranchRef.target.history
 	while (commitHistory.pageInfo.hasNextPage) {
 		const json = await fetchGithubJson(createQueryMoreCommits(repoNode.name, commitHistory.pageInfo.endCursor))
@@ -145,6 +154,10 @@ const getFullCommitHistory = async (repoNode: any) => {
 	return commitHistory
 }
 
+/**
+ * Get a list of public repositories from user "birusq" (me) 
+ * with relevant data about them from GitHub GraphQL API
+ */
 const getRepositories = async (): Promise<Repository[]> => {
 	const json = await fetchGithubJson(createQueryRepositories())
 	const histories = await Promise.all(json.data.user.repositories.nodes.map(
