@@ -9,7 +9,7 @@ type RepoRelease = {
 type RepoCommit = {
 	commitUrl: string,
 	committedDate: Date,
-	messageHeadLine: string,
+	messageHeadline: string,
 	messageBody: string
 }
 
@@ -46,7 +46,7 @@ const toRepoRelease = (node: any): RepoRelease => {
 const toRepoCommit = (node: any): RepoCommit => {
 	return {
 		commitUrl: node.commitUrl,
-		messageHeadLine: node.messageHeadLine,
+		messageHeadline: node.messageHeadline,
 		messageBody: node.messageBody,
 		committedDate: new Date(node.committedDate)
 	}
