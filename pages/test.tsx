@@ -12,8 +12,6 @@ const Test = ({ num }: InferGetStaticPropsType<typeof getStaticProps>) => {
 export const getStaticProps: GetStaticProps = async () => {
 	const num = await getRandNum()
 
-	console.log(num)
-
 	return {
 		props: {
 			num,

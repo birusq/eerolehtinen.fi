@@ -5,8 +5,6 @@ export default async (_req: NextApiRequest, res: NextApiResponse) => {
 	try {
 		const data = await getRepositories()
 
-		console.log(data)
-
 		res.status(200).json(data)
 	}
 	catch (err) {
